@@ -35,6 +35,8 @@
     #define LOG(...)
 #endif
 
+#define MAX_ENEMIES 50
+
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
 //----------------------------------------------------------------------------------
@@ -55,6 +57,12 @@ typedef struct Player {
     float speed;
 } Player;
 
+typedef struct Enemy {
+    Vector2 position;
+    float speed;
+    Vector2 target;
+} Enemy;
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -66,6 +74,7 @@ static unsigned int prevScreenScale = 1;
 
 static RenderTexture2D target = { 0 };  // Initialized at init
 Player player = { 0 };
+Enemy enemies[MAX_ENEMIES] = { 0 };
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -73,6 +82,11 @@ Player player = { 0 };
 // Module Functions Declaration
 //----------------------------------------------------------------------------------
 static void UpdateDrawFrame(void);      // Update and Draw one frame
+void UpdatePlayer(Player*, float);
+void DrawPlayer(Player*);
+void InitEnemies(Enemy*);
+void UpdateEnemies(Enemy*, Player*, float);
+void DrawEnemies(Enemy*);
 
 //------------------------------------------------------------------------------------
 // Program main entry point
@@ -88,8 +102,10 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib 9yr gamejam");
     
     // TODO: Load resources / Initialize variables at this point
-    player.position = Vector2Zero();
+    player.position = (Vector2){128, 128};
     player.speed = 50;
+
+    InitEnemies(enemies);
     
     // Render texture to draw full screen, enables screen scaling
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
@@ -148,14 +164,9 @@ void UpdateDrawFrame(void)
 
     // TODO: Update variables / Implement example logic at this point
     //----------------------------------------------------------------------------------
+    UpdatePlayer(&player, dt);
+    UpdateEnemies(enemies, &player, dt);
     
-    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) player.position.x -= player.speed * dt;
-    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) player.position.x += player.speed * dt;
-    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) player.position.y -= player.speed * dt;
-    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) player.position.y += player.speed * dt;
-
-    player.rectangle = (Rectangle){player.position.x, player.position.y, 16, 16};
-
     // Draw
     //----------------------------------------------------------------------------------
     // Render all screen to texture (for scaling)
@@ -169,7 +180,8 @@ void UpdateDrawFrame(void)
         DrawCircleLines(GetMouseX(), GetMouseY(), 10, MAROON);
 
         // TODO: Draw everything that requires to be drawn at this point:
-        DrawRectangleRec(player.rectangle, RED);
+        DrawPlayer(&player);
+        DrawEnemies(enemies);
         
     EndTextureMode();
     
@@ -181,4 +193,47 @@ void UpdateDrawFrame(void)
 
     EndDrawing();
     //----------------------------------------------------------------------------------  
+}
+
+void UpdatePlayer(Player* player, float dt)
+{
+    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) player->position.x -= player->speed * dt;
+    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) player->position.x += player->speed * dt;
+    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) player->position.y -= player->speed * dt;
+    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) player->position.y += player->speed * dt;
+
+    player->rectangle = (Rectangle){player->position.x, player->position.y, 16, 16};
+}
+
+void DrawPlayer(Player* player)
+{
+    DrawRectangleRec(player->rectangle, BLUE);
+}
+
+
+void InitEnemies(Enemy* enemies)
+{
+    for (size_t i = 0; i < MAX_ENEMIES; i++)
+    {
+        enemies[i].position = (Vector2){ GetRandomValue(0, 256), GetRandomValue(0, 256) };
+        enemies[i].speed = 5;
+        enemies[i].target = player.position;
+    }
+}
+
+void UpdateEnemies(Enemy* enemies, Player* player, float dt)
+{
+    for (size_t i = 0; i < MAX_ENEMIES; i++)
+    {
+        enemies[i].position = Vector2MoveTowards(enemies[i].position, enemies[i].target, enemies[i].speed * dt);
+        enemies[i].target = player->position;
+    }
+}
+
+void DrawEnemies(Enemy* enemies)
+{
+    for (size_t i = 0; i < MAX_ENEMIES; i++)
+    {
+        DrawRectangleV(enemies[i].position, (Vector2){16, 16}, RED);
+    }
 }
