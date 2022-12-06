@@ -234,6 +234,6 @@ void DrawEnemies(Enemy* enemies)
 {
     for (size_t i = 0; i < MAX_ENEMIES; i++)
     {
-        DrawRectangleV(enemies[i].position, (Vector2){16, 16}, RED);
+        DrawRectangleV(enemies[i].position, (Vector2){16, 16}, BLACK);
     }
 }
