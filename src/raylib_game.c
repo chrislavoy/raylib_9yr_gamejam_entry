@@ -12,6 +12,7 @@
 ********************************************************************************************/
 
 #include "raylib.h"
+#include "raymath.h"
 
 #if defined(PLATFORM_WEB)
     #define CUSTOM_MODAL_DIALOGS            // Force custom modal dialogs usage
@@ -46,6 +47,14 @@ typedef enum {
 
 // TODO: Define your custom data types here
 
+typedef struct Player {
+    Vector2 position;
+    float rotation;
+    Texture texture;
+    Rectangle rectangle;
+    float speed;
+} Player;
+
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
@@ -56,6 +65,7 @@ static unsigned int screenScale = 1;
 static unsigned int prevScreenScale = 1;
 
 static RenderTexture2D target = { 0 };  // Initialized at init
+Player player = { 0 };
 
 // TODO: Define global variables here, recommended to make them static
 
@@ -78,11 +88,13 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "raylib 9yr gamejam");
     
     // TODO: Load resources / Initialize variables at this point
+    player.position = Vector2Zero();
+    player.speed = 50;
     
     // Render texture to draw full screen, enables screen scaling
     // NOTE: If screen is scaled, mouse input should be scaled proportionally
     target = LoadRenderTexture(screenWidth, screenHeight);
-    SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
+    // SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -115,6 +127,7 @@ int main(void)
 // Update and draw frame
 void UpdateDrawFrame(void)
 {
+    float dt = GetFrameTime();
     // Update
     //----------------------------------------------------------------------------------
     // Screen scale logic (x2)
@@ -135,6 +148,13 @@ void UpdateDrawFrame(void)
 
     // TODO: Update variables / Implement example logic at this point
     //----------------------------------------------------------------------------------
+    
+    if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT)) player.position.x -= player.speed * dt;
+    if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) player.position.x += player.speed * dt;
+    if (IsKeyDown(KEY_W) || IsKeyDown(KEY_UP)) player.position.y -= player.speed * dt;
+    if (IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN)) player.position.y += player.speed * dt;
+
+    player.rectangle = (Rectangle){player.position.x, player.position.y, 16, 16};
 
     // Draw
     //----------------------------------------------------------------------------------
@@ -144,6 +164,12 @@ void UpdateDrawFrame(void)
         
         // TODO: Draw screen at 256x256
         DrawRectangle(10, 10, screenWidth - 20, screenHeight - 20, SKYBLUE);
+
+        // Draw equivalent mouse position on the target render-texture
+        DrawCircleLines(GetMouseX(), GetMouseY(), 10, MAROON);
+
+        // TODO: Draw everything that requires to be drawn at this point:
+        DrawRectangleRec(player.rectangle, RED);
         
     EndTextureMode();
     
@@ -152,11 +178,6 @@ void UpdateDrawFrame(void)
         
         // Draw render texture to screen scaled as required
         DrawTexturePro(target.texture, (Rectangle){ 0, 0, (float)target.texture.width, -(float)target.texture.height }, (Rectangle){ 0, 0, (float)target.texture.width*screenScale, (float)target.texture.height*screenScale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
-
-        // Draw equivalent mouse position on the target render-texture
-        DrawCircleLines(GetMouseX(), GetMouseY(), 10, MAROON);
-
-        // TODO: Draw everything that requires to be drawn at this point:
 
     EndDrawing();
     //----------------------------------------------------------------------------------  
